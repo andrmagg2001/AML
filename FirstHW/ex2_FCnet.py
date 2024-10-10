@@ -274,10 +274,40 @@ best_net = None # store the best model into this
 #################################################################################
 
 # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+# Impostazioni per l'ottimizzazione degli iperparametri
+best_val_acc = 0  # Accuracies iniziali
+best_net = None   # Modello migliore
 
+# Intervallo di valori da testare per ciascun iperparametro
+hidden_layer_sizes = [50, 100]  # Prova con diverse dimensioni del layer nascosto
+learning_rates = [1e-3, 1e-4]  # Differenti tassi di apprendimento
+regularization_strengths = [0.1, 0.25, 0.5]  # Differenti forze di regolarizzazione
 
+# Ciclo per testare combinazioni di iperparametri
+for hidden_size in hidden_layer_sizes:
+    for learning_rate in learning_rates:
+        for reg in regularization_strengths:
+            # Inizializza una nuova rete con i valori attuali degli iperparametri
+            net = TwoLayerNet(input_size, hidden_size, num_classes)
+            
+            # Addestra la rete
+            stats = net.train(X_train, y_train, X_val, y_val,
+                              num_iters=1000, batch_size=200,
+                              learning_rate=learning_rate, 
+                              learning_rate_decay=0.95,
+                              reg=reg, verbose=True)
 
-pass
+            # Valuta il modello sul set di validazione
+            val_acc = (net.predict(X_val) == y_val).mean()
+            print(f'Hidden size: {hidden_size}, Learning rate: {learning_rate}, Reg: {reg}, Val acc: {val_acc}')
+
+            # Se il modello corrente ha una maggiore accuratezza di validazione, salvalo
+            if val_acc > best_val_acc:
+                best_val_acc = val_acc
+                best_net = net
+
+# Stampa il miglior risultato ottenuto
+print('Best validation accuracy: ', best_val_acc)
 
 # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
