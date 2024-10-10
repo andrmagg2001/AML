@@ -148,11 +148,25 @@ class TwoLayerNet(object):
         ##############################################################################
 
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        dscores = scores                
+        dscores[np.arange(N), y] -= 1   
+        dscores /= N
+
+        # Gradiente W2
+        grads['W2'] = a2.T.dot(dscores) + reg * 2 * W2
+
+        # Gradiente b2
+        grads['b2'] = np.sum(dscores, axis=0)
+
+        da2 = dscores.dot(W2.T)
+        da2[z2 <= 0] = 0
+
+        # Gradiente di W1
+        grads['W1'] = X.T.dot(da2) + reg * 2 * W1
+        # Gradiente di b1
+        grads['b1'] = np.sum(da2, axis=0)
         
         
-
-        pass
-
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         return loss, grads
@@ -199,11 +213,10 @@ class TwoLayerNet(object):
             #########################################################################
             
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-            
-            
-            
-            pass
-        
+            batch_indices = np.random.choice(num_train, batch_size, replace=True)
+
+            X_batch = X[batch_indices]
+            y_batch = y[batch_indices]
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
             # Compute loss and gradients using the current minibatch
@@ -218,10 +231,9 @@ class TwoLayerNet(object):
             #########################################################################
             
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-            
-            
-            
-            pass
+            # Aggiornamento dei parametri usando i gradienti
+            for param in self.params:
+              self.params[param] -= learning_rate * grads[param]
         
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -269,10 +281,7 @@ class TwoLayerNet(object):
         ###########################################################################
         
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-
-
-        pass
+        y_pred = np.argmax(self.loss(X), axis = 1)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
