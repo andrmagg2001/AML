@@ -111,7 +111,8 @@ class MultiLayerPerceptron(nn.Module):
         layers = [] #Use the layers list to store a variable number of layers
         
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        layers.append(nn.Linear(input_size, hidden_layers[0]))
+        layers.append(nn.ReLU())
         
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
