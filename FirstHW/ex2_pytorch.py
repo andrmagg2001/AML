@@ -114,12 +114,25 @@ class MultiLayerPerceptron(nn.Module):
         layers.append(nn.Linear(input_size, hidden_layers[0]))
         layers.append(nn.ReLU())
         
+        # Aggiungo i layers nascosti
+        for i in range(1, len(hidden_layers)):
+            layers.append(nn.Linear(hidden_layers[i-1], hidden_layers[i]))
+            layers.append(nn.ReLU())
+
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         # Enter the layers into nn.Sequential, so the model may "see" them
         # Note the use of * in front of layers
         self.layers = nn.Sequential(*layers)
+
+        # Livello finale che va dall'ultimo livello nascosto all'output
+        layers.append(nn.Linear(hidden_layers[-1], num_classes))
+        
+        # Concatena tutti i livelli in un Sequential
+        self.network = nn.Sequential(*layers)
+
+
 
     def forward(self, x):
         #################################################################################
@@ -131,6 +144,8 @@ class MultiLayerPerceptron(nn.Module):
         
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
+        # Passo i dati attraverso la rete
+        out = self.network(x.view(x.size(0), -1))
 
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -170,6 +185,30 @@ if train:
             #################################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
+           
+            # Passa le immagini al modello
+            outputs = model(images)
+            
+            # Calcola la perdita
+            loss = criterion(outputs, labels)
+            
+            # Azzerare i gradienti dei parametri
+            optimizer.zero_grad()
+            
+            # Calcola i gradienti per il backpropagation
+            loss.backward()
+            
+            # Aggiorna i pesi
+            optimizer.step()
+            
+            # Stampa le informazioni di addestramento ogni tanto
+            if (i+1) % 100 == 0:
+                print(f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{total_step}], Loss: {loss.item():.4f}')
+                
+                # Decay del learning rate dopo ogni epoca
+                lr *= learning_rate_decay
+                update_lr(optimizer, lr)
+
 
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -193,8 +232,12 @@ if train:
                 # 2. Get the most confident predicted class        #
                 ####################################################
                 # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+                
+                # Ripasso il modello per la predizione
+                outputs = model(images)
 
-            
+                # Predizione con il valore più alto
+                _, predicted = torch.max(outputs, 1)           
 
                 # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
                 total += labels.size(0)
@@ -245,7 +288,12 @@ else:
             ####################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            
+            # Passa le immagini al modello per ottenere le predizioni
+            outputs = model(images)
+
+            # Ottieni le predizioni con il valore massimo
+            _, predicted = torch.max(outputs, 1)
+
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
             total += labels.size(0)
