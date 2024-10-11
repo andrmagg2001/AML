@@ -39,6 +39,7 @@ reg=0.001
 num_training= 49000
 num_validation =1000
 norm_layer = None #norm_layer = 'BN'
+dropout_prob = 0
 print(hidden_size)
 
 
@@ -53,7 +54,12 @@ print(hidden_size)
 data_aug_transforms = []
 # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-
+data_aug_transforms = [
+    transforms.RandomHorizontalFlip(p=0.5),  # Ribaltamento orizzontale con probabilità 0.5
+    transforms.RandomCrop(32, padding=4),    # Taglio casuale con padding di 4 pixel
+    transforms.RandomRotation(15),           # Rotazione casuale di massimo 15 gradi
+    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1)  # Regola luminosità, contrasto, saturazione, e tinta
+]
 
 # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 norm_transform = transforms.Compose(data_aug_transforms+[transforms.ToTensor(),
@@ -101,7 +107,7 @@ test_loader = torch.utils.data.DataLoader(dataset=test_dataset,
 # Set norm_layer for different networks whether using batch normalization
 #-------------------------------------------------
 class ConvNet(nn.Module):
-    def __init__(self, input_size, hidden_layers, num_classes, norm_layer=None):
+    def __init__(self, input_size, hidden_layers, num_classes, norm_layer=None, dropout_prob = 0):
         super(ConvNet, self).__init__()
         #################################################################################
         # TODO: Initialize the modules required to implement the convolutional layer    #
@@ -114,12 +120,18 @@ class ConvNet(nn.Module):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         # CONVOLUTION PART
+        layers.append(nn.Dropout2d(dropout_prob))
         layers.append(nn.Conv2d(input_size, hidden_layers[0], 3)) # First conv layer
+        if norm_layer == "BN":
+            layers.append(nn.BatchNorm2d()) # Batch Normalization
         layers.append(nn.MaxPool2d(2, stride=2)) # max pool layer
         layers.append(nn.ReLU()) # ReLU layer
 
         for i in range(1, len(hidden_layers)):
+            layers.append(nn.Dropout2d(dropout_prob))
             layers.append(nn.Conv2d(hidden_layers[i-1], hidden_layers[i], 3))
+            if norm_layer == "BN":
+                layers.append(nn.BatchNorm2d()) # Batch Normalization
             layers.append(nn.MaxPool2d(2, stride=2)) # max pool layer
             layers.append(nn.ReLU()) # ReLU layer
         # END CONVOLUTION PART
@@ -194,7 +206,7 @@ def VisualizeFilter(model):
 # In this question we will implement a convolutional neural networks using the PyTorch
 # library.  Please complete the code for the ConvNet class evaluating the model
 #--------------------------------------------------------------------------------------
-model = ConvNet(input_size, hidden_size, num_classes, norm_layer=norm_layer).to(device)
+model = ConvNet(input_size, hidden_size, num_classes, norm_layer=norm_layer, dropout_prob=dropout_prob).to(device)
 # Q2.a - Initialize the model with correct batch norm layer
 
 model.apply(weights_init)
@@ -224,7 +236,7 @@ loss_train = []
 loss_val = []
 best_accuracy = None
 accuracy_val = []
-best_model = type(model)(input_size, hidden_size, num_classes, norm_layer=norm_layer) # get a new instance
+best_model = type(model)(input_size, hidden_size, num_classes, norm_layer=norm_layer, dropout_prob=dropout_prob) # get a new instance
 #best_model = ConvNet(input_size, hidden_size, num_classes, norm_layer=norm_layer)
 for epoch in range(num_epochs):
 
@@ -289,8 +301,10 @@ for epoch in range(num_epochs):
 
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        
-
+        accuracy_threshold = 87
+        if accuracy >= accuracy_threshold:
+            best_model = model
+            
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     
@@ -320,7 +334,7 @@ plt.show()
 #################################################################################
 # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-
+model = best_model
 
 # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -349,6 +363,6 @@ VisualizeFilter(model)
 
 
 # Save the model checkpoint
-#torch.save(model.state_dict(), 'model.ckpt')
+torch.save(model.state_dict(), 'model.ckpt')
 
 
