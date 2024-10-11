@@ -5,6 +5,7 @@ import torchvision.transforms as transforms
 import numpy as np
 
 import matplotlib.pyplot as plt
+from vis_utils import visualize_grid
 
 
 def weights_init(m):
@@ -112,7 +113,20 @@ class ConvNet(nn.Module):
         layers = []
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
+        # CONVOLUTION PART
+        layers.append(nn.Conv2d(input_size, hidden_layers[0], 3)) # First conv layer
+        layers.append(nn.MaxPool2d(2, stride=2)) # max pool layer
+        layers.append(nn.ReLU()) # ReLU layer
 
+        for i in range(1, len(hidden_layers)):
+            layers.append(nn.Conv2d(hidden_layers[i-1], hidden_layers[i], 3))
+            layers.append(nn.MaxPool2d(2, stride=2)) # max pool layer
+            layers.append(nn.ReLU()) # ReLU layer
+        # END CONVOLUTION PART
+        layers.append(nn.Flatten()) # Flat the array
+        layers.append(nn.Linear(hidden_layers[-1], num_classes)) # Fully connected layer
+
+        self.net = nn.Sequential(*layers)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -121,9 +135,7 @@ class ConvNet(nn.Module):
         # TODO: Implement the forward pass computations                                 #
         #################################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-
-
+        out = self.net(x)
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return out
 
@@ -141,7 +153,12 @@ def PrintModelSize(model, disp=True):
     #################################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
+    params = [p.numel() for p in model.parameters() if p.requires_grad]
+    if disp:
+        for p in params:
+            print(p)
 
+    model_sz = sum(params)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     return model_sz
@@ -160,7 +177,12 @@ def VisualizeFilter(model):
     #################################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    first_layer_params = list(model.parameters())[0]
+
+    plt.figure(1)
+    plt.imshow(visualize_grid(first_layer_params[:100, :].reshape(100, 32,32, 3), padding=3))
+    # plt.gca().axis('off')
+    plt.show()  
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
