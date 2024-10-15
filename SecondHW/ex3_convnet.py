@@ -3,6 +3,7 @@ import torch.nn as nn
 import torchvision
 import torchvision.transforms as transforms
 import numpy as np
+import platform
 
 import matplotlib.pyplot as plt
 
@@ -21,7 +22,11 @@ def update_lr(optimizer, lr):
 #--------------------------------
 # Device configuration
 #--------------------------------
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+if platform.system() == "Darwin": 
+    device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
+else:
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+ 
 print('Using device: %s'%device)
 
 #--------------------------------
@@ -51,7 +56,10 @@ print(hidden_size)
 #################################################################################
 data_aug_transforms = []
 # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+data_aug_transforms = [
+    transforms.RandomHorizontalFlip(),
+    transforms.RandomCrop(32, padding=4),
+    transforms.RandomRotation(10)]
 
 
 # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -111,8 +119,22 @@ class ConvNet(nn.Module):
         #################################################################################
         layers = []
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        
+        for hidden_layer in hidden_layers:
+            layers.append(nn.Conv2d(input_size, hidden_layer,kernel_size=3,stride=1,padding=1))
+            layers.append(nn.ReLU(inplace=True))
 
+            if norm_layer == 'BN':
+                layers.append(nn.BatchNorm2d(hidden_layer))
 
+            layers.append(nn.Dropout())
+
+        layers.append(nn.Conv2d(hidden_layer, num_classes, kernel_size=3, stride=1, padding=1))
+
+        self.features = nn.Sequential(*layers)
+        self.pool = nn.AdaptiveAvgPool2d((1, 1))  
+        self.flatten = nn.Flatten()  
+        self.fc = nn.Linear(num_classes, num_classes)  
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -121,8 +143,10 @@ class ConvNet(nn.Module):
         # TODO: Implement the forward pass computations                                 #
         #################################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-
+        out = self.features(x)
+        out = self.pool(out)
+        out = self.flatten(out)
+        out = self.fc(out)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return out
@@ -140,7 +164,12 @@ def PrintModelSize(model, disp=True):
     # training                                                                      #
     #################################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    model_sz = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
+    if disp:
+        for name, param in model.named_parameters():
+            if param.requires_grad:
+                print(f"Layer {name} -> {param.numel()}")
 
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -160,7 +189,35 @@ def VisualizeFilter(model):
     #################################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    first_conv_layer = None
+    for layer in model.modules():
+        if isinstance(layer, nn.Conv2d):
+            first_conv_layer = layer
+            break
+
+    if first_conv_layer is not None:
+        weights = first_conv_layer.weight.data.cpu().numpy()
+        num_filters = weights.shape[0]
+
+        num_columns = 0
+        num_rows = num_filters // num_columns
+
+        if num_filters % num_columns:
+            num_rows += 1
+
+        fig, axes = plt.subplots(num_rows, num_columns, figsize=(num_columns, num_rows))
+
+        for i in range(num_filters):
+            ax = axes[i // num_columns, i % num_columns]
+            
+            filter_img = weights[i].transpose(1, 2, 0)  
+            
+            filter_img = (filter_img - filter_img.min()) / (filter_img.max() - filter_img.min())
+            
+            ax.imshow(filter_img)
+            ax.axis('off')
+
+        plt.show()
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
