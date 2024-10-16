@@ -199,7 +199,7 @@ def VisualizeFilter(model):
         weights = first_conv_layer.weight.data.cpu().numpy()
         num_filters = weights.shape[0]
 
-        num_columns = 0
+        num_columns = 12
         num_rows = num_filters // num_columns
 
         if num_filters % num_columns:
@@ -324,8 +324,11 @@ for epoch in range(num_epochs):
 
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        
-
+        if best_accuracy is None or accuracy > best_accuracy:
+            best_accuracy = accuracy
+            best_model.load_state_dict(model.state_dict())
+            print('Best model with accuracy: {:.2f}%'.format(best_accuracy))
+                 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     
@@ -355,7 +358,8 @@ plt.show()
 #################################################################################
 # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-
+model.load_state_dict(best_model.state_dict())
+print("Model loaded with accuracy: {:.2f}%".format(best_accuracy))
 
 # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
