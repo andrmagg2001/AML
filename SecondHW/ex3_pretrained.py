@@ -6,7 +6,7 @@ import torchvision.transforms as transforms
 
 import matplotlib.pyplot as plt
 
-#Initialization from the VGG with BN model (https://github.com/pytorch/vision/blob/master/torchvision/models/vgg.py)
+# Initialization from the VGG with BN model (https://github.com/pytorch/vision/blob/master/torchvision/models/vgg.py)
 def weights_init(m):
     if isinstance(m, nn.Conv2d):
         nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
@@ -48,10 +48,14 @@ weights_pre="VGG11_BN_Weights.DEFAULT" # set to None if you don't want to use pr
 #-------------------------------------------------
 # Load the CIFAR-10 dataset
 #-------------------------------------------------
-data_aug_transforms = [transforms.RandomHorizontalFlip(p=0.5)]#, transforms.RandomGrayscale(p=0.05)]
+data_aug_transforms = [transforms.RandomHorizontalFlip(p=0.5),
+                       transforms.RandomCrop(32, padding=4), 
+                       transforms.RandomRotation(15),
+                       transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1)]#, transforms.RandomGrayscale(p=0.05)]
 ###############################################################################
 # TODO: Add to data_aug_transforms the best performing data augmentation      #
 # strategy and hyper-parameters as found out in Q3.a                          #
+# DONE                                                                        #
 ###############################################################################
 
 norm_transform = transforms.Compose(data_aug_transforms+[transforms.ToTensor(),
@@ -107,7 +111,25 @@ class VggModel(nn.Module):
         #################################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        
+        # get the pretrained model
+        self.backbone = models.vgg11_bn(weights=weights_pre)
+        self.n_class = n_class
+
+        # freeze backbone paramaters:
+        for p in self.backbone.parameters():
+            if p.requires_grad:
+                p.requires_grad = False
+
+        if fine_tune:
+            # Add two fully connected layer for classification
+            self.ln1 = nn.Linear(input_size, layer_config[0])
+            self.ln2 = nn.Linear(layer_config[1], self.n_class)
+            self.batchNorm = nn.BatchNorm2d()
+            self.relu = nn.ReLU()
+            self.net = nn.Sequential(self.backbone, self.batchNorm, self.ln1, self.relu, self.batchNorm, self.ln2, self.relu)
+        else:
+            # no finetuning
+            self.net = nn.Sequential(self.backbone)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -117,7 +139,7 @@ class VggModel(nn.Module):
         #################################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        
+        out = self.net(x)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return out
@@ -139,8 +161,8 @@ print("Params to learn:")
 if fine_tune:
     params_to_update = []
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-    
-    
+
+    params_to_update = list(model.parameters)[-2] + list(model.parameters())[-1]
     
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 else:
@@ -228,7 +250,9 @@ for epoch in range(num_epochs):
 
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-
+        accuracy_threshold = 87
+        if accuracy >= accuracy_threshold:
+            best_model = model
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -258,7 +282,7 @@ plt.show()
 #################################################################################
 # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-
+model = best_model
 
 # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
