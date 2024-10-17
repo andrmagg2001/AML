@@ -120,8 +120,10 @@ class ConvNet(nn.Module):
         layers = []
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         
+        input_channels = input_size
+
         for hidden_layer in hidden_layers:
-            layers.append(nn.Conv2d(input_size, hidden_layer,kernel_size=3,stride=1,padding=1))
+            layers.append(nn.Conv2d(input_channels, hidden_layer, kernel_size=3, stride=1, padding=1))
             layers.append(nn.ReLU(inplace=True))
 
             if norm_layer == 'BN':
@@ -129,7 +131,9 @@ class ConvNet(nn.Module):
 
             layers.append(nn.Dropout())
 
-        layers.append(nn.Conv2d(hidden_layer, num_classes, kernel_size=3, stride=1, padding=1))
+            input_channels = hidden_layer
+
+        layers.append(nn.Conv2d(input_channels, num_classes, kernel_size=3, stride=1, padding=1))
 
         self.features = nn.Sequential(*layers)
         self.pool = nn.AdaptiveAvgPool2d((1, 1))  
@@ -388,6 +392,6 @@ VisualizeFilter(model)
 
 
 # Save the model checkpoint
-#torch.save(model.state_dict(), 'model.ckpt')
+torch.save(model.state_dict(), 'model.ckpt')
 
 
