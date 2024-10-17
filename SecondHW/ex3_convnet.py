@@ -5,6 +5,8 @@ import torchvision.transforms as transforms
 import numpy as np
 import platform
 
+import time as tm
+
 import matplotlib.pyplot as plt
 
 
@@ -269,6 +271,9 @@ for epoch in range(num_epochs):
 
     model.train()
 
+
+    t1 = tm.time()
+
     loss_iter = 0
     for i, (images, labels) in enumerate(train_loader):
         # Move tensors to the configured device
@@ -287,8 +292,10 @@ for epoch in range(num_epochs):
         loss_iter += loss.item()
         
         if (i+1) % 100 == 0:
-            print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'
-                   .format(epoch+1, num_epochs, i+1, total_step, loss.item()))
+            print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f} in {:.2f} seconds'
+                   .format(epoch+1, num_epochs, i+1, total_step, loss.item(), tm.time()-t1))
+        
+        
             
     loss_train.append(loss_iter/(len(train_loader)*batch_size))
 
