@@ -79,13 +79,15 @@ class NodeModel(nn.Module):
 
 
 class GlobalModel(nn.Module):
-    def __init__(self, in_dim, out_dim, reduce='sum'):
+    def __init__(self, in_dim, out_dim, reduce='sum', activation=True):
         super().__init__()
         # replace this with the class GlobalModel implemented by you in the theory part
-        self.global_mlp = nn.Sequential(nn.Linear(in_dim, out_dim), nn.ReLU())
-        
-        self.reduce = reduce
+        if activation:
+            self.global_mlp = nn.Sequential(nn.Linear(in_dim, out_dim), nn.ReLU())
+        else:
+            self.global_mlp = nn.Sequential(nn.Linear(in_dim, out_dim))
 
+        self.reduce = reduce
     def forward(self, x, edge_index, edge_attr, u, batch):
         # replace this with the forward function of the GlobalModel class implemented in the theory part
         u_batch = u[batch]

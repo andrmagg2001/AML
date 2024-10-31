@@ -1,0 +1,6 @@
+name: AML_env  # Sostituisci con il nome desiderato per il tuo ambiente
+dependencies:
+  - numpy
+  - pip:
+      - torch
+      - vis_utils
