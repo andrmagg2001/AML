@@ -1,24 +1,3 @@
-# SPDX-FileCopyrightText: Copyright (c) 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
-# SPDX-License-Identifier: MIT
-#
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -46,7 +25,6 @@ class EdgeModel(nn.Module):
         '''
         u_batch = u[batch]
         edge_input = torch.cat([src, dest, edge_attr, u_batch], dim=1)
-        updated_edge = self.edge_mlp(edge_input)
 
         # print("EDGE MODEL")
         # print(f"src: {src.shape}")
@@ -55,6 +33,8 @@ class EdgeModel(nn.Module):
         # print(f"u_batch: {u_batch.shape}")
         # print(f"edge_input: {edge_input.shape}")
         # print("#########################################")
+
+        updated_edge = self.edge_mlp(edge_input)
 
         return updated_edge
 
@@ -132,6 +112,7 @@ class GlobalModel(nn.Module):
         '''
         Add your code below
         '''
+        
         # Aggregate node features
         # u_batch = u[batch]
         node_aggregated = scatter(x, batch, dim=0, reduce=self.reduce)
